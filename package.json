@@ -1,0 +1,15 @@
+{
+  "name": "tglid",
+  "private": true,
+  "packageManager": "pnpm@11.7.0",
+  "scripts": {
+    "web:dev": "pnpm --dir apps/web dev",
+    "web:build": "pnpm --dir apps/web build",
+    "web:lint": "pnpm --dir apps/web lint",
+    "web:typecheck": "pnpm --dir apps/web typecheck",
+    "web:test": "pnpm --dir apps/web test"
+  },
+  "workspaces": [
+    "apps/web"
+  ]
+}
