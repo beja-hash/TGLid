@@ -11,7 +11,7 @@ export function formatStatus(status: DependencyStatus): string {
   const labels: Record<DependencyStatus, string> = {
     ok: "Доступен",
     unavailable: "Недоступен",
-    checking: "Проверяется"
+    checking: "Проверяется",
   };
   return labels[status];
 }

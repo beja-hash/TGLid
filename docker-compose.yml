@@ -59,6 +59,8 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:?Copy .env.example to .env before starting}
+        NEXT_PUBLIC_CSRF_COOKIE_NAME: ${NEXT_PUBLIC_CSRF_COOKIE_NAME:-tglid_csrf}
+        NEXT_PUBLIC_CSRF_HEADER_NAME: ${NEXT_PUBLIC_CSRF_HEADER_NAME:-X-CSRF-Token}
     ports:
       - "3000:3000"
     networks:

@@ -4,6 +4,8 @@
 
 node_modules/
 .next/
+.pnpm-store/
+*.tsbuildinfo
 coverage/
 
 __pycache__/

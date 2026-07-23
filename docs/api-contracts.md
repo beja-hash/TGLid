@@ -19,6 +19,10 @@
 
 Login возвращает одинаковый `401` для неизвестного email, неверного пароля и неактивного пользователя. `429` содержит `Retry-After`; недоступность Redis при проверке входа даёт безопасный `503`. Пользователь с `must_change_password=true` получает `403` на всех защищённых endpoint, кроме `/auth/me`, `/auth/change-password` и `/auth/logout`.
 
+### Использование frontend
+
+Frontend вызывает API с `credentials: include`. Для всех POST/PATCH, кроме login, он берёт значение не-HttpOnly CSRF cookie `tglid_csrf` и отправляет его в `X-CSRF-Token`; session cookie не читается JavaScript. После login и смены пароля клиент использует новое cookie-значение на следующем запросе, без хранения токенов в localStorage/sessionStorage.
+
 ## Критические модули и endpoint
 
 | Метод и путь | Назначение | Доступ |
