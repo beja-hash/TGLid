@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from pydantic import field_validator, model_validator
+from pydantic import SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,6 +30,12 @@ class Settings(BaseSettings):
     session_retention_days: int = 30
     session_last_seen_update_minutes: int = 5
     trusted_proxy_count: int = 0
+    telegram_api_id: int | None = None
+    telegram_api_hash: SecretStr | None = None
+    telegram_session_encryption_key: SecretStr | None = None
+    telegram_connect_timeout_seconds: int = 15
+    telegram_auth_challenge_ttl_seconds: int = 600
+    telegram_auth_max_attempts: int = 5
 
     @field_validator("cors_origins")
     @classmethod
@@ -48,6 +54,9 @@ class Settings(BaseSettings):
         "password_min_length",
         "session_retention_days",
         "session_last_seen_update_minutes",
+        "telegram_connect_timeout_seconds",
+        "telegram_auth_challenge_ttl_seconds",
+        "telegram_auth_max_attempts",
     )
     @classmethod
     def validate_positive(cls, value: int) -> int:

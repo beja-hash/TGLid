@@ -76,6 +76,54 @@ const eventDefinitions: Record<
     category: "security",
   },
   SESSION_REVOKED: { label: "Сессия завершена", category: "security" },
+  TELEGRAM_AUTH_STARTED: {
+    label: "Авторизация Telegram начата",
+    category: "authentication",
+  },
+  TELEGRAM_AUTH_CODE_FAILED: {
+    label: "Неверный код Telegram",
+    category: "error",
+  },
+  TELEGRAM_AUTH_2FA_REQUIRED: {
+    label: "Telegram запросил 2FA",
+    category: "security",
+  },
+  TELEGRAM_AUTH_2FA_FAILED: {
+    label: "Неверный пароль Telegram 2FA",
+    category: "error",
+  },
+  TELEGRAM_AUTH_SUCCEEDED: {
+    label: "Telegram авторизован",
+    category: "authentication",
+  },
+  TELEGRAM_FLOOD_WAIT: {
+    label: "Telegram ограничил запросы",
+    category: "warning",
+  },
+  TELEGRAM_ACCOUNT_CONNECTED: {
+    label: "Telegram подключён",
+    category: "authentication",
+  },
+  TELEGRAM_ACCOUNT_DISCONNECTED: {
+    label: "Telegram отключён",
+    category: "security",
+  },
+  TELEGRAM_ACCOUNT_RECONNECTED: {
+    label: "Telegram переподключён",
+    category: "authentication",
+  },
+  TELEGRAM_CONNECTION_CHECKED: {
+    label: "Соединение Telegram проверено",
+    category: "security",
+  },
+  TELEGRAM_CONNECTION_FAILED: {
+    label: "Ошибка соединения Telegram",
+    category: "error",
+  },
+  TELEGRAM_SESSION_REMOVED: {
+    label: "Сессия Telegram удалена",
+    category: "warning",
+  },
 };
 
 const eventOptions = Object.entries(eventDefinitions).sort(([, a], [, b]) =>

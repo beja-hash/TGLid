@@ -7,8 +7,10 @@ import {
   Globe2,
   RefreshCw,
   Server,
+  Send,
   TriangleAlert,
 } from "lucide-react";
+import Link from "next/link";
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 
 import { Button } from "../../components/ui/button";
@@ -21,6 +23,7 @@ import {
 } from "../../components/ui/primitives";
 import { ApiError, api } from "../../src/lib/api/client";
 import type { SystemStatus } from "../../src/lib/api/types";
+import type { TelegramAccount } from "../../src/lib/api/types";
 import { useAuth } from "../../src/lib/auth/context";
 
 type LoadState =
@@ -31,6 +34,7 @@ type LoadState =
 export default function HomePage() {
   const [state, setState] = useState<LoadState>({ kind: "loading" });
   const [refreshing, setRefreshing] = useState(false);
+  const [telegram, setTelegram] = useState<TelegramAccount | null>(null);
   const { user } = useAuth();
 
   const load = useCallback(async (isRefresh = false): Promise<void> => {
@@ -55,6 +59,14 @@ export default function HomePage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    if (user?.role !== "ADMIN") return;
+    void api
+      .telegramAccount()
+      .then(setTelegram)
+      .catch(() => setTelegram(null));
+  }, [user?.role]);
 
   const details = state.kind === "success" ? state.value : undefined;
   const allAvailable =
@@ -146,6 +158,45 @@ export default function HomePage() {
               status={state.value.redis}
             />
           </div>
+
+          {user?.role === "ADMIN" && (
+            <Card className="dashboard-telegram-card">
+              <span className="service-icon" aria-hidden="true">
+                <Send size={20} />
+              </span>
+              <div>
+                <h3>Telegram</h3>
+                <p>
+                  {telegram
+                    ? telegram.configured
+                      ? `Статус аккаунта: ${telegram.status}`
+                      : "Интеграция не настроена"
+                    : "Статус временно недоступен"}
+                </p>
+              </div>
+              <Badge
+                tone={
+                  telegram?.status === "CONNECTED"
+                    ? "success"
+                    : telegram?.status === "ERROR"
+                      ? "danger"
+                      : "neutral"
+                }
+              >
+                {telegram?.status === "CONNECTED"
+                  ? "Подключён"
+                  : telegram?.status === "ERROR"
+                    ? "Ошибка"
+                    : "Не влияет на health"}
+              </Badge>
+              <Link
+                className="button button-secondary button-small"
+                href="/telegram"
+              >
+                Управление
+              </Link>
+            </Card>
+          )}
 
           <div className="status-meta">
             <span>

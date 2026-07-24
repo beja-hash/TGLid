@@ -23,12 +23,42 @@ Login возвращает одинаковый `401` для неизвестн�
 
 Frontend вызывает API с `credentials: include`. Для всех POST/PATCH, кроме login, он берёт значение не-HttpOnly CSRF cookie `tglid_csrf` и отправляет его в `X-CSRF-Token`; session cookie не читается JavaScript. После login и смены пароля клиент использует новое cookie-значение на следующем запросе, без хранения токенов в localStorage/sessionStorage.
 
+## Telegram authorization 3.1B
+
+Все три endpoint требуют активного `ADMIN` без временного пароля и CSRF. В ответах возвращаются только `challenge_id`, этап (`AUTH_CODE_REQUIRED`, `AUTH_PASSWORD_REQUIRED` или `DISCONNECTED`) и маскированный номер.
+
+| Метод и путь | Тело | Результат |
+|---|---|---|
+| `POST /telegram-account/auth/start` | `phone` | Отправляет код и создаёт одноразовый Redis challenge. |
+| `POST /telegram-account/auth/verify-code` | `challenge_id`, повторно введённый `phone`, `code` | При 2FA возвращает `AUTH_PASSWORD_REQUIRED`; иначе сохраняет зашифрованную session и возвращает `DISCONNECTED`. |
+| `POST /telegram-account/auth/verify-password` | `challenge_id`, `password` | Завершает 2FA, сохраняет session и возвращает `DISCONNECTED`. |
+
+Challenge связан с конкретным администратором, имеет TTL и общий лимит неверных code/2FA попыток. После успеха или исчерпания лимита исходная запись challenge удаляется. Возможные безопасные ошибки: неверный/истёкший код (`400`), challenge истёк (`410`), уже использован (`409`), превышен лимит или FloodWait (`429`, с `Retry-After` для FloodWait), Telegram/Redis недоступен (`503`). Полный номер, code, 2FA password, StringSession и API credentials не попадают в ответы или audit metadata.
+
+## Telegram connection lifecycle 3.1C
+
+| Метод и путь | Назначение | Доступ |
+|---|---|---|
+| `GET /telegram-account` | `configured`, безопасный профиль, статус, времена проверки/подключения и безопасная ошибка | `ADMIN` |
+| `POST /telegram-account/connect` | Расшифровать session только в памяти, подключить и проверить единственный client | `ADMIN` + CSRF |
+| `POST /telegram-account/disconnect` | Закрыть client без logout и повторно сохранить зашифрованную session | `ADMIN` + CSRF |
+| `POST /telegram-account/check` | Одна лёгкая проверка текущего соединения без retry-loop | `ADMIN` + CSRF |
+| `DELETE /telegram-account/session` | Закрыть client, удалить ciphertext/nonce и деактивировать аккаунт | `ADMIN` + CSRF |
+
+Повторный connect идемпотентно возвращает текущий `CONNECTED` и не создаёт второй client. Invalid/unauthorized session и несовпадение Telegram user дают безопасный `409`; FloodWait — `429`; timeout — `504`; недоступность Telegram/configuration — `503`; отсутствие активного аккаунта — `404`. Session, nonce, полный номер и credentials отсутствуют в контракте ответа.
+
+### Использование frontend 3.1D
+
+Страница `/telegram` вызывает эти endpoint через общий API client с `credentials: include`; все POST и DELETE автоматически получают CSRF header из cookie. `challenge_id`, номер, code и пароль 2FA не сохраняются в URL, localStorage или sessionStorage. UI хранит flow только в памяти и очищает чувствительные поля после отправки и при закрытии диалога. `GET /telegram-account` используется также для отдельной Telegram-карточки dashboard, но её статус не участвует в вычислении общего health.
+
+Frontend отображает `NOT_CONFIGURED`, отсутствие аккаунта, `AUTH_CODE_REQUIRED`, `AUTH_PASSWORD_REQUIRED`, `DISCONNECTED`, `CONNECTING`, `CONNECTED` и `ERROR`. Для `401/403/409/410/429/503/504` показываются короткие безопасные сообщения; `Retry-After` используется для FloodWait. Поля `encrypted_session`, nonce, полный номер, API credentials, Telegram `phone_code_hash`, Redis keys и traceback не входят в frontend-типы и не отображаются.
+
 ## Критические модули и endpoint
 
 | Метод и путь | Назначение | Доступ |
 |---|---|---|
 | Auth, users и audit endpoint | См. реализованный контракт выше | По RBAC |
-| `POST /telegram-accounts/connect`, `POST /telegram-accounts/{id}/verify` | Защищённое подключение и проверка аккаунта | Администратор |
+| Telegram authorization и lifecycle endpoint выше | Реализованный flow одного аккаунта | Администратор; изменения + CSRF |
 | `GET/POST /source-groups`, `PATCH /source-groups/{id}` | Группы, настройки, включение | Администратор |
 | `POST /monitoring/start`, `POST /monitoring/stop`, `POST /operations/outbound-pause` | Управление мониторингом и аварийной паузой | Администратор |
 | `GET /leads`, `GET /leads/{id}`, `POST /leads/{id}/transition` | Kanban, карточка и доменный переход | По объектным правам |

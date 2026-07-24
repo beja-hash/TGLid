@@ -14,6 +14,18 @@
 - Операции, уменьшающие число активных администраторов, сериализуются transaction-scoped PostgreSQL advisory lock. Поэтому конкурентные изменения не могут оставить систему без активного `ADMIN`.
 - Критическое изменение и audit event коммитятся одной транзакцией. Audit metadata проходит защитную фильтрацию и не содержит секретов.
 
+### Telegram foundation, authorization and lifecycle 3.1A–3.1C
+
+- Telegram credentials необязательны для запуска API и не передаются в публичные схемы, логи или документацию с реальными значениями.
+- Постоянная и временная Telethon `StringSession` хранится только как AES-256-GCM ciphertext с новым случайным 96-битным nonce для каждого шифрования. Ключ — Base64-кодированные 32 байта из локального secret configuration.
+- Ошибка неверного ключа или повреждённого ciphertext возвращается как единая безопасная ошибка криптомодуля без диагностики, plaintext и значений ключа.
+- Redis challenge криптографически случаен, связан с одним `ADMIN`, имеет TTL и общий лимит ошибочных code/2FA попыток. Исходная challenge-запись удаляется после успеха/лимита; короткий marker позволяет безопасно отвергнуть повторное использование. Redis fail-closed возвращает `503`.
+- Redis не содержит полный номер: только маску и hash для сверки повторного ввода при verify-code. Code, 2FA password, plaintext session и API hash не хранятся и не включаются в audit. Audit фиксирует только безопасные события старта, ошибок, 2FA, успеха и FloodWait.
+- PostgreSQL частичный уникальный индекс допускает единственную активную Telegram-учётную запись. Process-local `TelegramConnectionManager` владеет максимум одним client, сериализует lifecycle и не выполняет Telegram logout. StringSession расшифровывается только перед созданием client и повторно шифруется после disconnect/shutdown.
+- Startup recovery выполняет одну ограниченную timeout попытку и fail-soft: Telegram failure переводит аккаунт в безопасный `ERROR`, но не влияет на API readiness. Check не содержит бесконечных retry; invalid/unauthorized session закрывает client. Удаление session очищает ciphertext/nonce и требует новой авторизации.
+- Логи и audit содержат только безопасные event/failure codes. StringSession, auth key, API hash, encryption key и полный номер не передаются. `.session` файлы не создаются, потому что используется только Telethon `StringSession`.
+- Текущая гарантия одного client относится к single-process API. До включения нескольких API workers необходим distributed single-owner механизм; несколько Telegram-аккаунтов, группы, сообщения и отправка не реализованы.
+
 ### Frontend 2.2B
 
 Интерфейс хранит в памяти только безопасный профиль пользователя. Он не читает HttpOnly session cookie, не использует JWT/localStorage и не логирует пароль или временный пароль. CSRF берётся только из специально выданной cookie и не взаимозаменяется с session token. Роль в React state управляет лишь навигацией; фактические права подтверждает backend. Audit metadata выводится React как текст JSON без HTML-инъекций.

@@ -6,6 +6,7 @@ import {
   LogOut,
   Menu,
   ShieldCheck,
+  Send,
   UserRound,
   UsersRound,
   X,
@@ -63,6 +64,10 @@ const pageTitles: Record<string, { title: string; description: string }> = {
   "/audit": {
     title: "Аудит",
     description: "Журнал действий в системе",
+  },
+  "/telegram": {
+    title: "Telegram",
+    description: "Авторизация и состояние подключения",
   },
 };
 
@@ -135,6 +140,13 @@ export function AppShell({
                 onClick={closeMenu}
               >
                 Сотрудники
+              </NavLink>
+              <NavLink
+                href="/telegram"
+                icon={<Send size={19} />}
+                onClick={closeMenu}
+              >
+                Telegram
               </NavLink>
               <NavLink
                 href="/audit"

@@ -92,4 +92,25 @@ describe("AuditPage", () => {
     render(<AuditPage />);
     expect(await screen.findByText("Журнал пока пуст")).toBeTruthy();
   });
+
+  it("maps Telegram lifecycle events to safe readable labels", async () => {
+    apiMocks.auditLogs.mockResolvedValue({
+      items: [
+        {
+          ...event,
+          id: "telegram-event-id",
+          event_type: "TELEGRAM_SESSION_REMOVED",
+          target_type: "telegram_account",
+          metadata: {},
+        },
+      ],
+      total: 1,
+      page: 1,
+      page_size: 50,
+    });
+    render(<AuditPage />);
+    expect(
+      (await screen.findAllByText("Сессия Telegram удалена")).length,
+    ).toBeGreaterThan(0);
+  });
 });

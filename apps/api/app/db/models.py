@@ -4,7 +4,19 @@ import uuid
 from datetime import datetime
 from enum import StrEnum
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Index, String, Text, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    Enum,
+    ForeignKey,
+    Index,
+    LargeBinary,
+    String,
+    Text,
+    func,
+    text,
+)
 from sqlalchemy.dialects.postgresql import CITEXT, JSONB, UUID
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -16,6 +28,16 @@ class Base(DeclarativeBase):
 class UserRole(StrEnum):
     ADMIN = "ADMIN"
     EMPLOYEE = "EMPLOYEE"
+
+
+class TelegramAccountStatus(StrEnum):
+    NOT_CONFIGURED = "NOT_CONFIGURED"
+    AUTH_CODE_REQUIRED = "AUTH_CODE_REQUIRED"
+    AUTH_PASSWORD_REQUIRED = "AUTH_PASSWORD_REQUIRED"
+    DISCONNECTED = "DISCONNECTED"
+    CONNECTING = "CONNECTING"
+    CONNECTED = "CONNECTED"
+    ERROR = "ERROR"
 
 
 class User(Base):
@@ -80,4 +102,44 @@ class AuditLog(Base):
         Index("ix_audit_created", "created_at"),
         Index("ix_audit_event", "event_type"),
         Index("ix_audit_actor", "actor_user_id"),
+    )
+
+
+class TelegramAccount(Base):
+    __tablename__ = "telegram_accounts"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    telegram_user_id: Mapped[int | None] = mapped_column(BigInteger, nullable=True)
+    phone_masked: Mapped[str | None] = mapped_column(String(32))
+    username: Mapped[str | None] = mapped_column(String(255))
+    first_name: Mapped[str | None] = mapped_column(String(255))
+    last_name: Mapped[str | None] = mapped_column(String(255))
+    status: Mapped[TelegramAccountStatus] = mapped_column(
+        Enum(TelegramAccountStatus, name="telegram_account_status"),
+        nullable=False,
+        server_default=TelegramAccountStatus.NOT_CONFIGURED.value,
+    )
+    encrypted_session: Mapped[bytes | None] = mapped_column(LargeBinary)
+    session_nonce: Mapped[bytes | None] = mapped_column(LargeBinary(12))
+    is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default="false")
+    connected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    disconnected_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error_code: Mapped[str | None] = mapped_column(String(100))
+    last_error_message: Mapped[str | None] = mapped_column(String(500))
+    created_by_user_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("users.id", ondelete="RESTRICT"), nullable=False
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    __table_args__ = (
+        Index(
+            "ux_telegram_accounts_one_active",
+            "is_active",
+            unique=True,
+            postgresql_where=text("is_active"),
+        ),
     )

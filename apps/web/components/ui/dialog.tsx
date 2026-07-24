@@ -106,6 +106,7 @@ export function ConfirmationDialog({
   confirmLabel,
   pending = false,
   danger = false,
+  notice,
   onConfirm,
   onClose,
 }: Readonly<{
@@ -115,6 +116,7 @@ export function ConfirmationDialog({
   confirmLabel: string;
   pending?: boolean;
   danger?: boolean;
+  notice?: string;
   onConfirm: () => void;
   onClose: () => void;
 }>) {
@@ -147,7 +149,7 @@ export function ConfirmationDialog({
     >
       {danger && (
         <p className="notice notice-warning">
-          Это действие повлияет на доступ сотрудника к системе.
+          {notice ?? "Это действие повлияет на доступ сотрудника к системе."}
         </p>
       )}
     </Dialog>

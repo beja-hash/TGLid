@@ -21,6 +21,9 @@ _SENSITIVE_AUDIT_KEYS = (
     "connection_string",
     "database_url",
     "redis_url",
+    "phone",
+    "verification_code",
+    "telegram_api",
 )
 _SENSITIVE_AUDIT_VALUE_MARKERS = (
     "authorization:",

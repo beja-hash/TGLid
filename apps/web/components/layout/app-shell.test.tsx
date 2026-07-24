@@ -57,6 +57,7 @@ describe("AppShell", () => {
         .getByRole("link", { name: "Сотрудники" })
         .getAttribute("aria-current"),
     ).toBe("page");
+    expect(screen.getByRole("link", { name: "Telegram" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Аудит" })).toBeTruthy();
   });
 
@@ -64,6 +65,7 @@ describe("AppShell", () => {
     mocks.role = "EMPLOYEE";
     render(<AppShell>Контент</AppShell>);
     expect(screen.queryByRole("link", { name: "Сотрудники" })).toBeNull();
+    expect(screen.queryByRole("link", { name: "Telegram" })).toBeNull();
     expect(screen.queryByRole("link", { name: "Аудит" })).toBeNull();
   });
 

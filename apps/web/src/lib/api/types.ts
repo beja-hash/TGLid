@@ -41,3 +41,35 @@ export type SystemStatus = {
   redis: "ok" | "unavailable";
   environment: string;
 };
+
+export type TelegramAccountStatus =
+  | "NOT_CONFIGURED"
+  | "AUTH_CODE_REQUIRED"
+  | "AUTH_PASSWORD_REQUIRED"
+  | "DISCONNECTED"
+  | "CONNECTING"
+  | "CONNECTED"
+  | "ERROR";
+
+export type TelegramAccount = {
+  configured: boolean;
+  id: string | null;
+  telegram_user_id: number | null;
+  phone_masked: string | null;
+  username: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  status: TelegramAccountStatus;
+  is_active: boolean;
+  connected_at: string | null;
+  disconnected_at: string | null;
+  last_checked_at: string | null;
+  last_error_code: string | null;
+  last_error_message: string | null;
+};
+
+export type TelegramAuthChallenge = {
+  challenge_id: string;
+  status: "AUTH_CODE_REQUIRED" | "AUTH_PASSWORD_REQUIRED" | "DISCONNECTED";
+  phone_masked: string;
+};

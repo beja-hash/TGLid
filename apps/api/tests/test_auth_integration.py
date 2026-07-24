@@ -16,7 +16,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from app.cli import cleanup_sessions, create_admin
 from app.core.config import get_settings
 from app.core.security import hash_password, hash_token, normalize_email
-from app.db.models import AuditLog, User, UserRole, UserSession
+from app.db.models import AuditLog, TelegramAccount, User, UserRole, UserSession
 from app.main import app
 from app.services.auth import utcnow
 from app.services.users import ensure_active_admin_remains, lock_user_for_admin_change
@@ -39,6 +39,7 @@ async def reset_storage() -> None:
     async with engine.begin() as connection:
         await connection.execute(delete(AuditLog))
         await connection.execute(delete(UserSession))
+        await connection.execute(delete(TelegramAccount))
         await connection.execute(delete(User))
     await engine.dispose()
     redis = Redis.from_url(settings.redis_url)

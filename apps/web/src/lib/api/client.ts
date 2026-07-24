@@ -2,6 +2,8 @@ import type {
   AuditLog,
   Paginated,
   SystemStatus,
+  TelegramAccount,
+  TelegramAuthChallenge,
   UserProfile,
   UserWithTemporaryPassword,
 } from "./types";
@@ -160,4 +162,36 @@ export const api = {
     apiRequest(
       `/api/v1/audit-logs${query.size > 0 ? `?${query.toString()}` : ""}`,
     ),
+  telegramAccount: (): Promise<TelegramAccount> =>
+    apiRequest("/api/v1/telegram-account"),
+  startTelegramAuth: (phone: string): Promise<TelegramAuthChallenge> =>
+    apiRequest("/api/v1/telegram-account/auth/start", {
+      method: "POST",
+      body: { phone },
+    }),
+  verifyTelegramCode: (
+    challengeId: string,
+    phone: string,
+    code: string,
+  ): Promise<TelegramAuthChallenge> =>
+    apiRequest("/api/v1/telegram-account/auth/verify-code", {
+      method: "POST",
+      body: { challenge_id: challengeId, phone, code },
+    }),
+  verifyTelegramPassword: (
+    challengeId: string,
+    password: string,
+  ): Promise<TelegramAuthChallenge> =>
+    apiRequest("/api/v1/telegram-account/auth/verify-password", {
+      method: "POST",
+      body: { challenge_id: challengeId, password },
+    }),
+  connectTelegram: (): Promise<TelegramAccount> =>
+    apiRequest("/api/v1/telegram-account/connect", { method: "POST" }),
+  disconnectTelegram: (): Promise<TelegramAccount> =>
+    apiRequest("/api/v1/telegram-account/disconnect", { method: "POST" }),
+  checkTelegram: (): Promise<TelegramAccount> =>
+    apiRequest("/api/v1/telegram-account/check", { method: "POST" }),
+  removeTelegramSession: (): Promise<void> =>
+    apiRequest("/api/v1/telegram-account/session", { method: "DELETE" }),
 };
